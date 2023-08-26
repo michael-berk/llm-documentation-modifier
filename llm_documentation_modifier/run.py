@@ -1,4 +1,4 @@
-from typing import List, Dict, Tuple, Optional, Set
+from typing import List, Dict, Optional, Set
 
 from utils.llm import OpenAI
 from utils.doc_manipulation import get_docstrings_from_file, transform_file_lines
@@ -70,20 +70,18 @@ class Run:
 
                 output[key] = current_value
 
-        percent_match = {
-            k: 100 * len(v) / self.n_comparison_operations for k, v in output.items()
-        }
-        for k, v in percent_match.items():
-            print("------------------\n" * 5)
-            print(k)
-            print(v)
-            if v != 100:
-                print('------------- {k} ------------\n'*4)
+        n_unique = {k: len(v) for k, v in output.items()}
+        for k, v in n_unique.items():
+            if v != 1:
+                print("==================\n" * 4)
+                print(k)
+                print(f"{v} / {self.n_comparison_operations}")
+                print("------------- ------------\n" * 4)
                 for vv in output[k]:
                     print(vv)
-                print('------------- {k} ------------\n'*4)
+                print("==================\n" * 4)
 
-        print(f"Overall equality by index: {percent_match.values()}")
+        print(f"Overall equality (not guaranteed to be in order): {n_unique.values()}")
 
     def single_file_run(self, run_type: int):
         """

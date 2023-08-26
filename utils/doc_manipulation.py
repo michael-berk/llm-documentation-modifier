@@ -5,6 +5,7 @@ from dataclasses import dataclass
 
 from utils.general import flatten, get_leading_whitespace
 
+
 ######################## Map Object ####################
 @dataclass
 class DocstringMap:
