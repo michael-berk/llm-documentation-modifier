@@ -10,6 +10,7 @@ class Run:
     def __init__(
         self,
         read_file_path: str,
+        context_path: str,
         write_file_path: Optional[str] = None,
         n_comparison_iterations: Optional[int] = 2,
     ):
@@ -24,16 +25,23 @@ class Run:
         self.read_file_path = read_file_path
         self.write_file_path = write_file_path
         self.n_comparison_operations = n_comparison_iterations
-        self.llm = OpenAI()
+        self.llm = OpenAI(context_path)
 
-    def _extract_and_convert_docstring(self) -> List[Dict[str, str]]:
+    def _extract_and_convert_docstring(
+        self, to_change_key: str = "all"
+    ) -> List[Dict[str, str]]:
         """
         Extract and convert docstrings using OpenAI.
+
+        Args:
+            to_change_key (str): Determine which types of docstrings should be replaced.
 
         Returns:
             List[Dict[str, str]]: A list of dictionaries containing original and predicted docstrings.
         """
-        docstring_map = list(get_docstrings_from_file(self.read_file_path))
+        docstring_map = list(
+            get_docstrings_from_file(self.read_file_path, to_change_key)
+        )
 
         for i, d in enumerate(docstring_map):
             docstring_map[i].predicted_text = self.llm.predict(d.text)
@@ -73,11 +81,13 @@ class Run:
         n_unique = {k: len(v) for k, v in output.items()}
         for k, v in n_unique.items():
             if v != 1:
-                print("==================\n" * 4)
                 print(k)
                 print(f"{v} / {self.n_comparison_operations}")
                 print("------------- ------------\n" * 4)
                 for vv in output[k]:
+                    print("----------- new instance --------------")
+                    print("----------- new instance --------------")
+                    print("----------- new instance --------------")
                     print(vv)
                 print("==================\n" * 4)
 

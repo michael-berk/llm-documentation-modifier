@@ -4,6 +4,7 @@ prompt: |
   - Use the docstring above as a template.
   - Avoid line length exceeding 100 characters.
   - If the function description does not exist, don't add one.
+  - Don't add types in the args/returns.
   Convert the below docstring to google's python format.
   ____________________INSTRUCTION END__________________
 

@@ -53,3 +53,18 @@ def clean_and_split_comment(comment: str) -> List[str]:
         List[str]: A list of cleaned comment lines.
     """
     return [x + "\n" for x in comment.split("\n") if x.strip() != '"""']
+
+
+def lines_are_equal(list1: list, list2: list) -> bool:
+    """Check if two lists of strings are equal after stripping each string.
+
+    Args:
+        list1 (list): The first list of strings.
+        list2 (list): The second list of strings.
+
+    Returns:
+        bool: True if the lists are equal after stripping, else False.
+    """
+    return len(list1) == len(list2) and all(
+        a.strip() == b.strip() for a, b in zip(list1, list2)
+    )

@@ -2,8 +2,10 @@ import os
 from langchain.chat_models import ChatOpenAI
 from typing import List, Optional
 
-from constants import CONTEXT_PATH, OPENAI_ENVIRON_KEY, OPENAI_MODEL
 from utils.general import clean_and_split_comment, read_yaml
+
+OPENAI_MODEL = "gpt-4"
+#OPENAI_MODEL = "gpt-3.5-turbo" # cheaper and faster - use this in dev
 
 
 class OpenAI:
@@ -11,13 +13,26 @@ class OpenAI:
     A class for handling interactions with OpenAI.
     """
 
-    def __init__(self):
+    def __init__(self, context_path: str):
         """
         Initialize the OpenAI interaction class.
+
+        Args:
+            context_path (str): The relative path (to root) of the context to use for the LLM.
         """
-        self.context = read_yaml(CONTEXT_PATH)
+        self.context = read_yaml(context_path)
+
+        token_key = "OPENAI_TOKEN"
+        assert (
+            token_key in os.environ
+        ), f"{token_key} environment variable does not exist."
+        assert os.environ[token_key] not in {
+            None,
+            "",
+        }, f"{token_key} environment variable is empty."
+
         self.llm = ChatOpenAI(
-            openai_api_key=os.environ[OPENAI_ENVIRON_KEY], model_name=OPENAI_MODEL
+            openai_api_key=os.environ[token_key], model_name=OPENAI_MODEL
         )
 
     def build_context(self, node_type: Optional[str] = None) -> str:

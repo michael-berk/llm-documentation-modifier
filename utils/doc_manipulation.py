@@ -5,15 +5,25 @@ from dataclasses import dataclass
 
 from utils.general import flatten, get_leading_whitespace
 
+_AST_TYPES_MAP = {
+    "all": (ast.FunctionDef, ast.Module, ast.ClassDef),
+    "function": (ast.FunctionDef,),
+    "module": (ast.Module,),
+    "class": (ast.ClassDef,),
+}
+
 
 ######################## Map Object ####################
 @dataclass
 class DocstringMap:
-    start_line_number: int
-    end_line_number: int
-    text: str
-    docstring_type: Union[ast.Module, ast.FunctionDef, ast.ClassDef]
+    start_line_number: int = -1
+    end_line_number: int = -1
+    text: str = ""
+    docstring_type: Union[ast.Module, ast.FunctionDef, ast.ClassDef] = None
     predicted_text: Optional[str] = None
+
+    def __post_init__(self):
+        self.text = self.text.strip().strip('"""')
 
 
 ######################## Read ####################
@@ -35,21 +45,26 @@ def _get_node_type(node: ast.AST) -> Union[ast.Module, ast.FunctionDef, ast.Clas
         return ast.ClassDef
 
 
-def _get_docstrings_map(source_code: str) -> Iterator[DocstringMap]:
+def _get_docstrings_map(source_code: str, to_change_key: str) -> Iterator[DocstringMap]:
     """
     Yield DocstringMap objects for docstrings found in the source code.
+    Note that rows ranges are 0-indexed and the end index is meant to be used as non-inclusive.
 
     Args:
         source_code (str): Python source code.
+        to_change_key (str): Key in the _AST_TYPES_MAP corresponding to which modules shuold
+                         be modified.
 
     Yields:
         DocstringMap: Map object containing docstring details.
     """
-    # Rows ranges are 0-indexed and the end index is meant to be used as non-inclusive.
+
+    assert to_change_key in _AST_TYPES_MAP.keys()
+
     tree = ast.parse(source_code)
 
     for node in ast.walk(tree):
-        if isinstance(node, (ast.Module, ast.FunctionDef, ast.ClassDef)):
+        if isinstance(node, _AST_TYPES_MAP[to_change_key]):
             if docstring := ast.get_docstring(node, clean=True):
                 yield DocstringMap(
                     start_line_number=node.body[0].lineno,
@@ -59,18 +74,22 @@ def _get_docstrings_map(source_code: str) -> Iterator[DocstringMap]:
                 )
 
 
-def get_docstrings_from_file(path: str) -> Iterator[DocstringMap]:
+def get_docstrings_from_file(
+    path: str, to_change_key: str = "all"
+) -> Iterator[DocstringMap]:
     """
     Read docstrings from a file and yield DocstringMap objects.
 
     Args:
         path (str): Path to the Python file.
+        to_change_key (str): Key in the _AST_TYPES_MAP corresponding to which modules shuold
+                         be modified.
 
     Yields:
         DocstringMap: Map object containing docstring details.
     """
     with open(path, "r") as file:
-        return _get_docstrings_map(file.read())
+        return _get_docstrings_map(file.read(), to_change_key)
 
 
 ####################### Write ###################
@@ -80,7 +99,9 @@ def _get_list_chunks_not_in_index(
     inclusive: bool = False,
 ) -> Iterator[List[Any]]:
     """
-    Split the list at specified delimiter indices.
+    This function breaks `list_to_split` into chunks, where sections of the list that fall within the 
+    index ranges defined by `delimiter_tuples` are excluded. Essentially, it returns the portions of 
+    the list that are outside these delimiter ranges.
 
     Args:
         list_to_split (List[Any]): List to split.
@@ -120,18 +141,27 @@ def _replace_lines(
         List[str]: Modified file lines.
     """
     line_numbers = [
-        (x.start_line_number, x.end_line_number) for x in new_comments_line_mappings
+        (x.start_line_number, x.end_line_number - 1) for x in new_comments_line_mappings
     ]
-    file_lines_to_keep = list(_get_list_chunks_not_in_index(file_lines, line_numbers))
+    file_lines_to_keep = list(
+        _get_list_chunks_not_in_index(file_lines, line_numbers)
+    )
     sorted_replacements = sorted(
-        new_comments_line_mappings.keys(), key=lambda x: x.start_line_number
+        new_comments_line_mappings, key=lambda x: x.start_line_number
     )
 
     for raw_file, comment in zip_longest(
-        file_lines_to_keep, sorted_replacements, fillvalue=[""]
+        file_lines_to_keep, sorted_replacements, fillvalue=None
     ):
-        prepend_value = get_leading_whitespace(raw_file[-1])
-        predicted_lines = comment.predicted_value
+        # Handle replacement lists of differing length
+        predicted_lines = comment.predicted_text if comment else []
+        if raw_file:
+            prepend_value = get_leading_whitespace(raw_file[-1])
+        else:
+            raw_file = []
+            prepend_value = ""
+
+        # Indent according to prior line in raw_file
         comment_indented = [prepend_value + x for x in predicted_lines]
 
         yield raw_file + comment_indented
