@@ -187,5 +187,4 @@ def transform_file_lines(
         old_file_lines = f.readlines()
 
     new_file_lines = list(_replace_lines(old_file_lines, new_comments_line_mapping))
-    print(list(new_file_lines))
     return flatten(new_file_lines)

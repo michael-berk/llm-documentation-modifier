@@ -36,9 +36,9 @@ class Run:
         )
 
         for i, d in enumerate(docstring_map):
-            print(d.text)
             docstring_map[i].predicted_text = self.llm.predict(d.text)
             print(docstring_map[i].predicted_text)
+            print(f"{i} / {len(docstring_map)} docstrings converted.")
 
         return docstring_map
 

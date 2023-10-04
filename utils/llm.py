@@ -4,20 +4,9 @@ from typing import List, Dict, Tuple
 
 from mlflow.gateway import set_gateway_uri, query
 
-from langchain.chat_models import ChatOpenAI
-from langchain.schema.messages import (
-    BaseMessage,
-    AIMessage,
-    SystemMessage,
-    HumanMessage,
-)
-
-from langchain.memory import ChatMessageHistory
-
 
 # _MODEL_NAME = "chat-gpt-3.5-turbo"
 _MODEL_NAME = "chat-gpt-4"
-_TOKEN_KEY = "OPENAI_API_KEY"
 _TEMPERATURE = 0.0
 
 _SYSTEM_PROMPT = "You are an python software developer that converts doctsrings to the google style format."
@@ -25,6 +14,9 @@ _REQUEST_TO_LLM = "Convert the below docstring args and returns to google style.
 _RULES = """
 - Don't exceed 100 character length.
 - If there are no parameters/returns, don't include an Args/Returns section.
+- Do not modify .. blocks or bullet lists within the Args/Returns section.
+- Don't include types.
+- Indenting should be consistent for each argument or return value.
 """
 
 
@@ -53,7 +45,6 @@ class Context:
 
     def increment_prompt(self, response: str = None):
         if self.has_prompts():
-            print(self.prompts[0])
             current_prompt = self.prompts.pop(0)
             if response is not None:
                 self.append_message(role="assistant", content=response)
@@ -100,9 +91,18 @@ class DocstringReformatContext(Context):
         return [
             (
                 "user",
-                ("Only display the docstring, as described by the rules above."),
+                (
+                    "Only display the docstring, as described by the rules above."
+                    'Surround the value with three double quotes: """'
+                ),
             )
         ]
+
+    @staticmethod
+    def extract_docstring(docstring: str, delim: str = '"""') -> str:
+        parts = docstring.split(delim)
+        assert len(parts) > 2
+        return delim.join(parts[1:-1])
 
 
 class OpenAI:
@@ -120,12 +120,10 @@ class OpenAI:
         response = None
         while context.has_prompts():
             context.increment_prompt(response=response)
-            print(context.messages)
             raw_response = query(
                 _MODEL_NAME, {"messages": context.messages, "temperature": _TEMPERATURE}
             )
             response = raw_response["candidates"][0]["message"]["content"]
-            print(response)
-            print("----------------")
 
-        return response
+        response_clean = context.extract_docstring(response)
+        return response_clean
