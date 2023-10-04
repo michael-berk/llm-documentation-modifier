@@ -151,8 +151,13 @@ def _replace_lines(
     for raw_file, comment in zip_longest(
         file_lines_to_keep, sorted_replacements, fillvalue=None
     ):
+        # Convert from string to list of lines
+        if comment is None:
+            predicted_lines = []
+        else:
+            predicted_lines = [l + "\n" for l in comment.predicted_text.split("\n")]
+
         # Handle replacement lists of differing length
-        predicted_lines = comment.predicted_text if comment else []
         if raw_file:
             prepend_value = get_leading_whitespace(raw_file[-1])
         else:
@@ -181,6 +186,6 @@ def transform_file_lines(
     with open(read_file_path, "r") as f:
         old_file_lines = f.readlines()
 
-    new_file_lines = _replace_lines(old_file_lines, new_comments_line_mapping)
-    print(new_file_lines == old_file_lines)
+    new_file_lines = list(_replace_lines(old_file_lines, new_comments_line_mapping))
+    print(list(new_file_lines))
     return flatten(new_file_lines)
