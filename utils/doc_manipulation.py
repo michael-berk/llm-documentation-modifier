@@ -99,8 +99,8 @@ def _get_list_chunks_not_in_index(
     inclusive: bool = False,
 ) -> Iterator[List[Any]]:
     """
-    This function breaks `list_to_split` into chunks, where sections of the list that fall within the 
-    index ranges defined by `delimiter_tuples` are excluded. Essentially, it returns the portions of 
+    This function breaks `list_to_split` into chunks, where sections of the list that fall within the
+    index ranges defined by `delimiter_tuples` are excluded. Essentially, it returns the portions of
     the list that are outside these delimiter ranges.
 
     Args:
@@ -143,9 +143,7 @@ def _replace_lines(
     line_numbers = [
         (x.start_line_number, x.end_line_number - 1) for x in new_comments_line_mappings
     ]
-    file_lines_to_keep = list(
-        _get_list_chunks_not_in_index(file_lines, line_numbers)
-    )
+    file_lines_to_keep = list(_get_list_chunks_not_in_index(file_lines, line_numbers))
     sorted_replacements = sorted(
         new_comments_line_mappings, key=lambda x: x.start_line_number
     )
@@ -153,8 +151,13 @@ def _replace_lines(
     for raw_file, comment in zip_longest(
         file_lines_to_keep, sorted_replacements, fillvalue=None
     ):
+        # Convert from string to list of lines
+        if comment is None:
+            predicted_lines = []
+        else:
+            predicted_lines = [l + "\n" for l in comment.predicted_text.split("\n")]
+
         # Handle replacement lists of differing length
-        predicted_lines = comment.predicted_text if comment else []
         if raw_file:
             prepend_value = get_leading_whitespace(raw_file[-1])
         else:
@@ -183,6 +186,5 @@ def transform_file_lines(
     with open(read_file_path, "r") as f:
         old_file_lines = f.readlines()
 
-    new_file_lines = _replace_lines(old_file_lines, new_comments_line_mapping)
-    print(new_file_lines == old_file_lines)
+    new_file_lines = list(_replace_lines(old_file_lines, new_comments_line_mapping))
     return flatten(new_file_lines)
