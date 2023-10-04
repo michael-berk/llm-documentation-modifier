@@ -9,16 +9,18 @@ class Run:
         self,
         read_file_path: str,
         overwrite: bool,
-        context_path: str,
-        write_file_path: Optional[str] = None,
+        write_file_path: Optional[str],
+        gateway_uri: str,
+        gateway_route_name: str,
     ):
         self.read_file_path = read_file_path
-        self.overwrite = overwrite
-        self.write_file_path = self._resolve_write_file_path(write_file_path)
-        self.context_path = context_path
-        self.llm = OpenAI()
+        self.write_file_path = self._resolve_write_file_path(write_file_path, overwrite)
+        self.llm = OpenAI(gateway_uri, gateway_route_name)
 
-    def _resolve_write_file_path(self, write_file_path: str) -> str:
+    def _resolve_write_file_path(self, write_file_path: str, overwrite: bool) -> str:
+        if overwrite:
+            return self.read_file_path
+
         if write_file_path is not None:
             return write_file_path
         else:

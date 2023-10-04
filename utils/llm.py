@@ -5,10 +5,6 @@ from typing import List, Dict, Tuple
 from mlflow.gateway import set_gateway_uri, query
 
 
-# _MODEL_NAME = "chat-gpt-3.5-turbo"
-_MODEL_NAME = "chat-gpt-4"
-_TEMPERATURE = 0.0
-
 _SYSTEM_PROMPT = "You are an python software developer that converts doctsrings to the google style format."
 _REQUEST_TO_LLM = "Convert the below docstring args and returns to google style."
 _RULES = """
@@ -17,7 +13,10 @@ _RULES = """
 - Do not modify .. blocks or bullet lists within the Args/Returns section.
 - Don't include types.
 - Indenting should be consistent for each argument or return value.
+- Don't drop any wording or code examples.
 """
+
+_TEMPERATURE = 0.0
 
 
 @dataclass
@@ -102,12 +101,13 @@ class DocstringReformatContext(Context):
     def extract_docstring(docstring: str, delim: str = '"""') -> str:
         parts = docstring.split(delim)
         assert len(parts) > 2
-        return delim.join(parts[1:-1])
+        return delim.join(parts[1:-1]).strip("\n")
 
 
 class OpenAI:
-    def __init__(self):
-        set_gateway_uri(gateway_uri="http://localhost:5000")
+    def __init__(self, gateway_uri: str, gateway_route_name: str):
+        set_gateway_uri(gateway_uri=gateway_uri)
+        self.gateway_route_name = gateway_route_name
 
     def predict(self, docstring: str):
         context = DocstringReformatContext(
@@ -121,7 +121,8 @@ class OpenAI:
         while context.has_prompts():
             context.increment_prompt(response=response)
             raw_response = query(
-                _MODEL_NAME, {"messages": context.messages, "temperature": _TEMPERATURE}
+                self.gateway_route_name,
+                {"messages": context.messages, "temperature": _TEMPERATURE},
             )
             response = raw_response["candidates"][0]["message"]["content"]
 

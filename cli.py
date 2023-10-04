@@ -17,23 +17,32 @@ from llm_documentation_modifier.run import Run
     help="If True, the read-file-path will be be overwritten.",
 )
 @click.option(
-    "--context-path",
-    type=str,
-    required=False,
-    default="./context/convert-to-google-style/v1/context.yaml",
-    help="Path to the LLM prompot/context of interest.",
-)
-@click.option(
     "--write-file-path",
     type=str,
     required=False,
+    default=None,
     help="Path to the file where transformed lines will be written.",
 )
-def cli(read_file_path, overwrite, context_path, write_file_path):
+@click.option(
+    "--gateway-uri",
+    type=str,
+    required=False,
+    default="http://localhost:5000",
+    help="URI for the mlflow gateway URI serving the LLM",
+)
+@click.option(
+    "--gateway-route-name",
+    type=str,
+    required=True,
+    help="Name of the route in the AI gateway",
+)
+def cli(read_file_path, overwrite, write_file_path, gateway_uri, gateway_route_name):
     """
     Execute a single file operation based on the given parameters and run type.
     """
-    Run(read_file_path, overwrite, context_path, write_file_path).single_file_run()
+    Run(
+        read_file_path, overwrite, write_file_path, gateway_uri, gateway_route_name
+    ).single_file_run()
 
 
 if __name__ == "__main__":
