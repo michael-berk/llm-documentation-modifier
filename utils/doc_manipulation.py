@@ -99,8 +99,8 @@ def _get_list_chunks_not_in_index(
     inclusive: bool = False,
 ) -> Iterator[List[Any]]:
     """
-    This function breaks `list_to_split` into chunks, where sections of the list that fall within the 
-    index ranges defined by `delimiter_tuples` are excluded. Essentially, it returns the portions of 
+    This function breaks `list_to_split` into chunks, where sections of the list that fall within the
+    index ranges defined by `delimiter_tuples` are excluded. Essentially, it returns the portions of
     the list that are outside these delimiter ranges.
 
     Args:
@@ -143,9 +143,7 @@ def _replace_lines(
     line_numbers = [
         (x.start_line_number, x.end_line_number - 1) for x in new_comments_line_mappings
     ]
-    file_lines_to_keep = list(
-        _get_list_chunks_not_in_index(file_lines, line_numbers)
-    )
+    file_lines_to_keep = list(_get_list_chunks_not_in_index(file_lines, line_numbers))
     sorted_replacements = sorted(
         new_comments_line_mappings, key=lambda x: x.start_line_number
     )

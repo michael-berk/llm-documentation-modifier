@@ -3,16 +3,14 @@ from typing import List, Dict, Optional, Set
 from utils.llm import OpenAI
 from utils.doc_manipulation import get_docstrings_from_file, transform_file_lines
 
-_SUPPORTED_RUNS = {1, 2, 3}
-
 
 class Run:
     def __init__(
         self,
         read_file_path: str,
+        overwrite: bool,
         context_path: str,
         write_file_path: Optional[str] = None,
-        n_comparison_iterations: Optional[int] = 2,
     ):
         """
         Initialize the Run class.
@@ -20,15 +18,36 @@ class Run:
         Args:
             read_file_path (str): Path to the file from which docstrings will be read.
             write_file_path (str, optional): Path to the file where transformed lines will be written. Defaults to None.
-            n_comparison_iterations (int, optional): Number of times to compare for variance test. Defaults to 2.
         """
         self.read_file_path = read_file_path
-        self.write_file_path = write_file_path
-        self.n_comparison_operations = n_comparison_iterations
-        self.llm = OpenAI(context_path)
+        self.overwrite = overwrite
+        self.write_file_path = self._resolve_write_file_path(write_file_path)
+        self.context_path = context_path
+        self.llm = OpenAI()
+
+    def _resolve_write_file_path(self, write_file_path: str) -> str:
+        """
+        If write_file_path is None, assign read path with an underscore
+        prepended to the file name.
+
+        Args:
+            write_file_path: The path to the write file.
+
+        Returns:
+            The resolved write file path.
+
+        """
+        if write_file_path is not None:
+            return write_file_path
+        else:
+            split_path = self.read_file_path.split("/")
+            path, file_name = "/".join(split_path[:-1]), split_path[-1]
+            new_file_name = "_" + file_name
+
+            return path + "/" + new_file_name
 
     def _extract_and_convert_docstring(
-        self, to_change_key: str = "all"
+        self, to_change_key: str = "function"
     ) -> List[Dict[str, str]]:
         """
         Extract and convert docstrings using OpenAI.
@@ -61,58 +80,12 @@ class Run:
         with open(write_path, "r+") as f:
             f.writelines(file_lines)
 
-    def _variance_test(self):
-        """
-        Run the variance test to determine how much the predicted docstrings vary over multiple runs.
-        """
-        output = {}  # type: Dict[str, Set[str]]
-        for i in range(self.n_comparison_operations):
-            print(f"Running iteration: {i}")
-            docstring_map = self._extract_and_convert_docstring()
-            for docstring in docstring_map:
-                key = docstring.text
-                value = "\n".join(docstring.predicted_text)
-
-                current_value = output.get(key, set())
-                current_value.add(value)
-
-                output[key] = current_value
-
-        n_unique = {k: len(v) for k, v in output.items()}
-        for k, v in n_unique.items():
-            if v != 1:
-                print(k)
-                print(f"{v} / {self.n_comparison_operations}")
-                print("------------- ------------\n" * 4)
-                for vv in output[k]:
-                    print("----------- new instance --------------")
-                    print("----------- new instance --------------")
-                    print("----------- new instance --------------")
-                    print(vv)
-                print("==================\n" * 4)
-
-        print(f"Overall equality (not guaranteed to be in order): {n_unique.values()}")
-
-    def single_file_run(self, run_type: int):
+    def single_file_run(self):
         """
         Execute a single file operation based on the run type.
-
-        Args:
-            run_type (int): Type of run to execute. Supported values are in the _SUPPORTED_RUNS set.
 
         Raises:
             AssertionError: If the run type is not supported.
             ValueError: If the run type does not match any of the predefined types.
         """
-        assert (
-            run_type in _SUPPORTED_RUNS
-        ), f"Run type {run_type} must be in {_SUPPORTED_RUNS}"
-
-        if run_type == 1:  # Overwrite
-            self._write_to_file(self.read_file_path)
-        elif run_type == 2:  # Temp File
-            self._write_to_file(self.write_file_path)
-        elif run_type == 3:  # Repeat and compare
-            self._variance_test()
-        else:
-            raise ValueError(f"Run type {run_type} is not supported.")
+        self._write_to_file(self.read_file_path)

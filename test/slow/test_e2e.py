@@ -18,9 +18,9 @@ def test_e2e_no_write():
 
     with open("/Users/michael.berk/Desktop/_pmdarima.py", "w+") as f:
         f.write("".join(observed))
-    #for observed_line, expected_line in zip_longest(observed, expected, fillvalue=[""]):
+    # for observed_line, expected_line in zip_longest(observed, expected, fillvalue=[""]):
     #    assert observed_line == expected_line
 
-    observed = ''.join(observed).replace('\\n','').replace('\n','')
-    expected = ''.join(expected).replace('\\n','').replace('\n','')
+    observed = "".join(observed).replace("\\n", "").replace("\n", "")
+    expected = "".join(expected).replace("\\n", "").replace("\n", "")
     assert observed == expected
