@@ -16,6 +16,21 @@ _AST_TYPES_MAP = {
 ######################## Map Object ####################
 @dataclass
 class DocstringMap:
+    """
+    DocstringMap provides a mapping between line numbers in the file of interest
+    and llm-predicted docstrings. The schema is as follows:
+
+    - start_line_number: 1-indexed line number of the start of the docstring of
+                         interest (including triple quotes)
+    - end_line_number: 1-indexed line number of the end of the docstring of
+                       interest (including triple quotes)
+    - text: raw docstring str (without triple quotes)
+    - docstring_type: ast type for whether the docstring is a Module, Function, or
+                      Class
+    - predicted_text: llm predicted docstring
+
+    """
+
     start_line_number: int = -1
     end_line_number: int = -1
     text: str = ""
@@ -28,15 +43,6 @@ class DocstringMap:
 
 ######################## Read ####################
 def _get_node_type(node: ast.AST) -> Union[ast.Module, ast.FunctionDef, ast.ClassDef]:
-    """
-    Determine the type of the given AST node.
-
-    Args:
-        node (ast.AST): AST node.
-
-    Returns:
-        Union[ast.Module, ast.FunctionDef, ast.ClassDef]: Type of the given node.
-    """
     if isinstance(node, ast.Module):
         return ast.Module
     if isinstance(node, ast.FunctionDef):
@@ -46,17 +52,8 @@ def _get_node_type(node: ast.AST) -> Union[ast.Module, ast.FunctionDef, ast.Clas
 
 
 def _get_docstrings_map(source_code: str, to_change_key: str) -> Iterator[DocstringMap]:
-    """
-    Yield DocstringMap objects for docstrings found in the source code.
+    """Yield DocstringMap objects for docstrings found in the source code.
     Note that rows ranges are 0-indexed and the end index is meant to be used as non-inclusive.
-
-    Args:
-        source_code (str): Python source code.
-        to_change_key (str): Key in the _AST_TYPES_MAP corresponding to which modules shuold
-                         be modified.
-
-    Yields:
-        DocstringMap: Map object containing docstring details.
     """
 
     assert to_change_key in _AST_TYPES_MAP.keys()
@@ -77,17 +74,6 @@ def _get_docstrings_map(source_code: str, to_change_key: str) -> Iterator[Docstr
 def get_docstrings_from_file(
     path: str, to_change_key: str = "all"
 ) -> Iterator[DocstringMap]:
-    """
-    Read docstrings from a file and yield DocstringMap objects.
-
-    Args:
-        path (str): Path to the Python file.
-        to_change_key (str): Key in the _AST_TYPES_MAP corresponding to which modules shuold
-                         be modified.
-
-    Yields:
-        DocstringMap: Map object containing docstring details.
-    """
     with open(path, "r") as file:
         return _get_docstrings_map(file.read(), to_change_key)
 
@@ -102,14 +88,6 @@ def _get_list_chunks_not_in_index(
     This function breaks `list_to_split` into chunks, where sections of the list that fall within the
     index ranges defined by `delimiter_tuples` are excluded. Essentially, it returns the portions of
     the list that are outside these delimiter ranges.
-
-    Args:
-        list_to_split (List[Any]): List to split.
-        delimiter_tuples (List[Tuple[int, int]]): List of tuples specifying start and end delimiters.
-        inclusive (bool, optional): If True, the ending index will be included in the returned lines.
-
-    Yields:
-        List[Any]: Chunk of the split list.
     """
     if inclusive:
         delimiter_tuples = [(a, b + 1) for a, b in delimiter_tuples]
@@ -130,18 +108,8 @@ def _get_list_chunks_not_in_index(
 def _replace_lines(
     file_lines: List[str], new_comments_line_mappings: Dict[DocstringMap, Any]
 ) -> Iterator[List[str]]:
-    """
-    Replace specified lines in the file with new comments.
-
-    Args:
-        file_lines (List[str]): Original file lines.
-        new_comments_line_mappings (Dict[DocstringMap, Any]): Mapping of DocstringMap to new comments.
-
-    Yields:
-        List[str]: Modified file lines.
-    """
     line_numbers = [
-        (x.start_line_number, x.end_line_number - 1) for x in new_comments_line_mappings
+        (x.start_line_number, x.end_line_number) for x in new_comments_line_mappings
     ]
     file_lines_to_keep = list(_get_list_chunks_not_in_index(file_lines, line_numbers))
     sorted_replacements = sorted(
@@ -156,6 +124,7 @@ def _replace_lines(
             predicted_lines = []
         else:
             predicted_lines = [l + "\n" for l in comment.predicted_text.split("\n")]
+            raw_file = raw_file[:-1] if raw_file[-1].strip() == '"""' else raw_file
 
         # Handle replacement lists of differing length
         if raw_file:
@@ -173,16 +142,6 @@ def _replace_lines(
 def transform_file_lines(
     read_file_path: str, new_comments_line_mapping: Dict[DocstringMap, Any]
 ) -> List[str]:
-    """
-    Modify the lines of a file with new comments and return the new lines.
-
-    Args:
-        read_file_path (str): Path to the original file.
-        new_comments_line_mapping (Dict[DocstringMap, Any]): Mapping of DocstringMap to new comments.
-
-    Returns:
-        List[str]: Modified file lines.
-    """
     with open(read_file_path, "r") as f:
         old_file_lines = f.readlines()
 

@@ -2,6 +2,9 @@ from typing import List, Dict, Optional, Set
 
 from utils.llm import OpenAI
 from utils.doc_manipulation import get_docstrings_from_file, transform_file_lines
+from utils.log import init_logger
+
+_logger = init_logger()
 
 
 class Run:
@@ -36,19 +39,21 @@ class Run:
         docstring_map = list(
             get_docstrings_from_file(self.read_file_path, to_change_key)
         )
+        _logger.info(f"Converting {len(docstring_map)} docstrings...")
 
         for i, d in enumerate(docstring_map):
-            docstring_map[i].predicted_text = self.llm.predict(d.text)
-            print(docstring_map[i].predicted_text)
-            print(f"{i} / {len(docstring_map)} docstrings converted.")
+            _logger.info(f"Converting {i + 1} / {len(docstring_map)} docstrings.")
 
+            docstring_map[i].predicted_text = self.llm.predict(d.text)
+            _logger.info("Predicted text:\n\n" + docstring_map[i].predicted_text + "\n")
+            _logger.info(f"Converted {i + 1} / {len(docstring_map)} docstrings.")
         return docstring_map
 
     def _write_to_file(self, write_path: str):
         docstring_map = self._extract_and_convert_docstring()
         file_lines = transform_file_lines(self.read_file_path, docstring_map)
 
-        print(f"Writing to {write_path}")
+        _logger.info(f"Writing to {write_path}")
         with open(write_path, "w+") as f:
             f.writelines(file_lines)
 
