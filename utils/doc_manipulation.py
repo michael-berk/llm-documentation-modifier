@@ -123,7 +123,9 @@ def _replace_lines(
         if comment is None:
             predicted_lines = []
         else:
-            predicted_lines = [l + "\n" for l in comment.predicted_text.split("\n")]
+            predicted_lines = [
+                (" " * 4) + l + "\n" for l in comment.predicted_text.split("\n")
+            ]
             raw_file = raw_file[:-1] if raw_file[-1].strip() == '"""' else raw_file
 
         # Handle replacement lists of differing length
