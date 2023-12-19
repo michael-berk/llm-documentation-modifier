@@ -232,5 +232,4 @@ def test_get_list_chunks_not_in_index():
 def test_remove_no_args_or_returns():
     docstring_map = [DocstringMap(text="Some docstring")]
     output = _remove_docstrings_without_args_or_returns(docstring_map)
-    print(output)
-    assert len([_ for x in output]) == 0
+    assert len(output) == 0
