@@ -6,7 +6,8 @@ import ast
 from utils.doc_manipulation import (
     _get_docstrings_map,
     _get_list_chunks_not_in_index,
-    _replace_lines,
+    DocstringMap,
+    _remove_docstrings_without_args_or_returns,
 )
 
 _PMDARIMA_PATH = "./test/test_resources/pmdarima.py"
@@ -226,3 +227,9 @@ def test_get_list_chunks_not_in_index():
     expected = [[0, 1], [5, 6], [8, 9, 10, 11, 12, 13, 14], [17, 18, 19]]
 
     assert observed == expected
+
+
+def test_remove_no_args_or_returns():
+    docstring_map = [DocstringMap(text="Some docstring")]
+    output = _remove_docstrings_without_args_or_returns(docstring_map)
+    assert len(output) == 0

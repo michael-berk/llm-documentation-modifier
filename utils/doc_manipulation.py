@@ -71,11 +71,18 @@ def _get_docstrings_map(source_code: str, to_change_key: str) -> Iterator[Docstr
                 )
 
 
+def _remove_docstrings_without_args_or_returns(
+    docstring_map: List[DocstringMap],
+) -> List[DocstringMap]:
+    return [x for x in docstring_map if ":param" in x.text or ":return:" in x.text]
+
+
 def get_docstrings_from_file(
     path: str, to_change_key: str = "all"
-) -> Iterator[DocstringMap]:
+) -> List[DocstringMap]:
     with open(path, "r") as file:
-        return _get_docstrings_map(file.read(), to_change_key)
+        all_docstrings = _get_docstrings_map(file.read(), to_change_key)
+        return _remove_docstrings_without_args_or_returns(all_docstrings)
 
 
 ####################### Write ###################
