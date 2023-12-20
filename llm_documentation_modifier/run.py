@@ -63,7 +63,7 @@ class Run:
 
     def run(self):
         if os.path.isdir(self.read_file_path):
-            files_to_modify = get_file_paths_in_directory(self.read_file_path)
+            files_to_modify = get_file_paths_in_directory(self.read_file_path, ".py")
             _logger.info(
                 "The read path is detected to be a directory. The write path parameter will be "
                 "ignored and all files in the read directory will be transformed in place."

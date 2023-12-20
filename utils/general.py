@@ -3,12 +3,13 @@ import yaml
 from typing import List, Any, Union, Dict
 
 
-def get_file_paths_in_directory(directory: str):
+def get_file_paths_in_directory(directory: str, suffix: str = ""):
     return sorted(
         [
             os.path.join(root, file)
             for root, _, files in os.walk(directory)
             for file in files
+            if file.endswith(suffix)
         ]
     )
 
