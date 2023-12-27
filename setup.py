@@ -8,5 +8,5 @@ setup(
     author_email="michaelberk99@gmail.com",
     description="LLM-based modification for a documentation in a code repository/file.",
     packages=find_packages(),
-    install_requires=["yaml", "lanchain", "openai"],
+    install_requires=["yaml", "lanchain", "openai", "click"],
 )
