@@ -17,17 +17,8 @@ def diff_files(old_soup, new_soup):
     filtered_diff = [
         (i, line.rstrip("\n"))
         for i, line in enumerate(diff)
-        if (line.startswith("- ") or line.startswith("+ "))
-        #     and not line[1:].strip().startswith("<")
+        if (line.startswith("- ") or line.startswith("+ ")) and line.strip() != ""
     ]
-    additions = [x for x in filtered_diff if x[1].startswith("+ ")]
-    subtractions = [x for x in filtered_diff if x[1].startswith("- ")]
-
-    # for x in additions:
-    #     print(f"{x[0]}: {x[1]}")
-
-    # for x in subtractions:
-    #     print(f"{x[0]}: {x[1]}")
 
     for x in filtered_diff:
         print(f"{x[0]}: {x[1]}")
