@@ -8,7 +8,7 @@ LLM-based modification for a documentation in a code repository/file.
 1. Open a new terminal window and cd into the above directory. This terminal window serves the gateway on local host and must remain open while using the service.
 2. Install the mlflow gateway via `pip install 'mlflow[gateway]'`
 3. Expose your LLM token via `export OPENAI_API_KEY=XYZ`
-4. Start the gateway `mlflow gateway start --config-path ./gateway/config.yaml`
+4. Start the gateway `mlflow deployments start-server --config-path ./gateway/config.yaml`
 
 ##### Step 2: Run the CLI
 

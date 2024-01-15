@@ -2,7 +2,7 @@ import logging
 from dataclasses import dataclass, field
 from typing import List, Dict, Tuple
 
-from mlflow.gateway import set_gateway_uri, query
+from mlflow.deployments import get_deploy_client
 
 
 _logger = logging.getLogger()
@@ -121,9 +121,9 @@ class DocstringReformatContext(Context):
 
 
 class OpenAI:
-    def __init__(self, gateway_uri: str, gateway_route_name: str):
-        set_gateway_uri(gateway_uri=gateway_uri)
-        self.gateway_route_name = gateway_route_name
+    def __init__(self, deploy_uri: str, deploy_route_name: str):
+        self.client = get_deploy_client(deploy_uri)
+        self.deploy_route_name = deploy_route_name
 
     def predict(self, docstring: str):
         context = DocstringReformatContext(
@@ -137,10 +137,10 @@ class OpenAI:
         while context.has_prompts():
             _logger.info("Incrementing prompt.")
             context.increment_prompt(response=response)
-            raw_response = query(
-                self.gateway_route_name,
-                {"messages": context.messages, "temperature": _TEMPERATURE},
+            raw_response = self.client.predict(
+                endpoint=self.deploy_route_name,
+                inputs={"messages": context.messages, "temperature": _TEMPERATURE},
             )
-            response = raw_response["candidates"][0]["message"]["content"]
+            response = raw_response["choices"][0]["message"]["content"]
 
         return response

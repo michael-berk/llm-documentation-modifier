@@ -23,23 +23,23 @@ from llm_documentation_modifier.run import Run
     ),
 )
 @click.option(
-    "--gateway-uri",
+    "--deploy-uri",
     type=str,
     required=False,
     default="http://localhost:5000",
-    help="URI for the mlflow gateway URI serving the LLM",
+    help="URI for the mlflow deploy URI serving the LLM",
 )
 @click.option(
-    "--gateway-route-name",
+    "--deploy-route-name",
     type=str,
     required=True,
-    help="Name of the route in the AI gateway",
+    help="Name of the route in the AI deploy",
 )
-def cli(read_file_path, write_file_path, gateway_uri, gateway_route_name):
+def cli(read_file_path, write_file_path, deploy_uri, deploy_route_name):
     """
     Execute a single file operation based on the given parameters and run type.
     """
-    Run(read_file_path, write_file_path, gateway_uri, gateway_route_name).run()
+    Run(read_file_path, write_file_path, deploy_uri, deploy_route_name).run()
 
 
 if __name__ == "__main__":
