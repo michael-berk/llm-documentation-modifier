@@ -18,14 +18,14 @@ class Run:
         self,
         read_file_path: str,
         write_file_path: Optional[str],
-        gateway_uri: str,
-        gateway_route_name: str,
+        deploy_uri: str,
+        deploy_route_name: str,
     ):
         self.read_file_path = read_file_path
         self.write_file_path = (
             read_file_path if write_file_path is None else write_file_path
         )
-        self.llm = OpenAI(gateway_uri, gateway_route_name)
+        self.llm = OpenAI(deploy_uri, deploy_route_name)
 
     def _extract_and_convert_docstring(
         self, _read_file_path: str, to_change_key: str = "function"
