@@ -6,6 +6,10 @@ import os
 
 
 def diff_files(old_soup, new_soup):
+    # Prettify to format then text text
+    old_soup = BeautifulSoup(old_soup.prettify(), "html.parser").get_text()
+    new_soup = BeautifulSoup(new_soup.prettify(), "html.parser").get_text()
+
     diff = difflib.ndiff(
         str(old_soup).splitlines(keepends=True), str(new_soup).splitlines(keepends=True)
     )
@@ -14,15 +18,18 @@ def diff_files(old_soup, new_soup):
         (i, line.rstrip("\n"))
         for i, line in enumerate(diff)
         if (line.startswith("- ") or line.startswith("+ "))
-        and not line[1:].strip().startswith("<")
+        #     and not line[1:].strip().startswith("<")
     ]
     additions = [x for x in filtered_diff if x[1].startswith("+ ")]
     subtractions = [x for x in filtered_diff if x[1].startswith("- ")]
 
-    for x in additions:
-        print(f"{x[0]}: {x[1]}")
+    # for x in additions:
+    #     print(f"{x[0]}: {x[1]}")
 
-    for x in subtractions:
+    # for x in subtractions:
+    #     print(f"{x[0]}: {x[1]}")
+
+    for x in filtered_diff:
         print(f"{x[0]}: {x[1]}")
 
 
@@ -41,12 +48,8 @@ def compare_html_files(old_dir: str, new_dir: str):
                     with open(old_file_path, "r") as old_file, open(
                         new_file_path, "r"
                     ) as new_file:
-                        old_soup = BeautifulSoup(
-                            old_file.read(), "html.parser"
-                        ).prettify()
-                        new_soup = BeautifulSoup(
-                            new_file.read(), "html.parser"
-                        ).prettify()
+                        old_soup = BeautifulSoup(old_file.read(), "html.parser")
+                        new_soup = BeautifulSoup(new_file.read(), "html.parser")
 
                         diff_files(old_soup, new_soup)
 
