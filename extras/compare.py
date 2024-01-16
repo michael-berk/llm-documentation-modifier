@@ -11,14 +11,12 @@ def preprocess_lines(soup):
     soup = BeautifulSoup(soup.prettify(), "html.parser").get_text()
     lines = str(soup).splitlines(keepends=True)
     return lines
-    #return [line.lstrip() for line in lines]
 
 def diff_files(old_soup, new_soup):
     old_lines = preprocess_lines(old_soup)
     new_lines = preprocess_lines(new_soup)
 
     diff = difflib.ndiff(old_lines, new_lines)
-
     filtered_diff = [
         (i, line.rstrip("\n"))
         for i, line in enumerate(diff)
