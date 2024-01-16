@@ -4,15 +4,20 @@ import difflib
 import pandas as pd
 import os
 
+def _get_relative_file_name(full_path: str) -> str:
+    return full_path.split("mlflow")[-1].replace("/docs/build/html/", "")
+
+def preprocess_lines(soup):
+    soup = BeautifulSoup(soup.prettify(), "html.parser").get_text()
+    lines = str(soup).splitlines(keepends=True)
+    return lines
+    #return [line.lstrip() for line in lines]
 
 def diff_files(old_soup, new_soup):
-    # Prettify to format then text text
-    old_soup = BeautifulSoup(old_soup.prettify(), "html.parser").get_text()
-    new_soup = BeautifulSoup(new_soup.prettify(), "html.parser").get_text()
+    old_lines = preprocess_lines(old_soup)
+    new_lines = preprocess_lines(new_soup)
 
-    diff = difflib.ndiff(
-        str(old_soup).splitlines(keepends=True), str(new_soup).splitlines(keepends=True)
-    )
+    diff = difflib.ndiff(old_lines, new_lines)
 
     filtered_diff = [
         (i, line.rstrip("\n"))
@@ -28,7 +33,7 @@ def compare_html_files(old_dir: str, new_dir: str):
     for root, _, files in os.walk(old_dir):
         for file in files:
             if file.endswith(".html"):
-                print(file)
+                print(_get_relative_file_name(root + '/' + file))
                 print("------------------------------")
                 old_file_path = os.path.join(root, file)
                 new_file_path = os.path.join(
