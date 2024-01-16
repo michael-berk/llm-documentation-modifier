@@ -17,7 +17,7 @@ def diff_files(old_soup, new_soup):
     filtered_diff = [
         (i, line.rstrip("\n"))
         for i, line in enumerate(diff)
-        if (line.startswith("- ") or line.startswith("+ ")) and line.strip() != ""
+        if (line.startswith("- ") or line.startswith("+ ")) and len(line[1:].strip()) > 0
     ]
 
     for x in filtered_diff:
