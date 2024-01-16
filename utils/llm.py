@@ -20,7 +20,8 @@ _RULES = '''
 
 Here is an example style:
 
-"""This is a docstring. Here is info.
+"""
+This is a docstring. Here is info.
 
 Here is more info.
 
