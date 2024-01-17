@@ -27,6 +27,10 @@ Here is more info.
 
 Args:
     parameter_1: Description of parameter 1.
+
+        - Bullet 1
+        - Bullet 2
+
     parameter_2: Description of parameter 2 with more information about the 
         parameter.
 
