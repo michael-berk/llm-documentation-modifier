@@ -1,7 +1,11 @@
+import logging
 from dataclasses import dataclass, field
 from typing import List, Dict, Tuple
 
-from mlflow.gateway import set_gateway_uri, query
+from mlflow.deployments import get_deploy_client
+
+
+_logger = logging.getLogger()
 
 
 _SYSTEM_PROMPT = "You are an python software developer that converts doctsrings to the google style format."
@@ -9,9 +13,9 @@ _REQUEST_TO_LLM = "Convert the below docstring args and returns to google style.
 _RULES = '''
 - Don't exceed 100 character length.
 - If there are no parameters/returns, don't include an Args/Returns section.
-- Do not modify .. blocks or bullet lists within the Args/Returns section.
+- Do not modify .. blocks or bullet lists within the Args/Returns section. Only indent 2 spaces.
+- For arguments in double brackets, insert them after the argument name.
 - Don't include types.
-- Indenting should be consistent for each argument or return value.
 - Don't drop any wording or code examples.
 - Here is an example docstring:
 
@@ -48,9 +52,7 @@ _TEMPERATURE = 0.0
 @dataclass
 class Context:
     """
-    Chat context creation without chat prompt formatting.
-
-    This class handles state for a given chat interaction.
+    Chat context without chat prompt formatting.
     """
 
     messages: List[Dict] = field(default_factory=list)
@@ -65,7 +67,7 @@ class Context:
             assert len(role_and_message) == 2
             self.append_message(*role_and_message)
 
-    def has_prompts(self):
+    def has_prompts(self) -> bool:
         return len(self.prompts) > 0
 
     def increment_prompt(self, response: str = None):
@@ -119,21 +121,17 @@ class DocstringReformatContext(Context):
                 (
                     "Only display the docstring, as described by the rules above."
                     'Surround the value with three double quotes: """'
+                    "If the first line is a docstring description, the first "
+                    "line should start with triple quotes."
                 ),
             )
         ]
 
-    @staticmethod
-    def extract_docstring(docstring: str, delim: str = '"""') -> str:
-        parts = docstring.split(delim)
-        assert len(parts) > 2
-        return delim.join(parts[1:-1]).strip("\n")
-
 
 class OpenAI:
-    def __init__(self, gateway_uri: str, gateway_route_name: str):
-        set_gateway_uri(gateway_uri=gateway_uri)
-        self.gateway_route_name = gateway_route_name
+    def __init__(self, deploy_uri: str, deploy_route_name: str):
+        self.client = get_deploy_client(deploy_uri)
+        self.deploy_route_name = deploy_route_name
 
     def predict(self, docstring: str):
         context = DocstringReformatContext(
@@ -145,12 +143,12 @@ class OpenAI:
 
         response = None
         while context.has_prompts():
+            _logger.info("Incrementing prompt.")
             context.increment_prompt(response=response)
-            raw_response = query(
-                self.gateway_route_name,
-                {"messages": context.messages, "temperature": _TEMPERATURE},
+            raw_response = self.client.predict(
+                endpoint=self.deploy_route_name,
+                inputs={"messages": context.messages, "temperature": _TEMPERATURE},
             )
-            response = raw_response["candidates"][0]["message"]["content"]
+            response = raw_response["choices"][0]["message"]["content"]
 
-        response_clean = context.extract_docstring(response)
-        return response_clean
+        return response
