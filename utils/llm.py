@@ -1,4 +1,3 @@
-import os
 from dataclasses import dataclass, field
 from typing import List, Dict, Tuple
 
@@ -7,14 +6,41 @@ from mlflow.gateway import set_gateway_uri, query
 
 _SYSTEM_PROMPT = "You are an python software developer that converts doctsrings to the google style format."
 _REQUEST_TO_LLM = "Convert the below docstring args and returns to google style."
-_RULES = """
+_RULES = '''
 - Don't exceed 100 character length.
 - If there are no parameters/returns, don't include an Args/Returns section.
 - Do not modify .. blocks or bullet lists within the Args/Returns section.
 - Don't include types.
 - Indenting should be consistent for each argument or return value.
 - Don't drop any wording or code examples.
+- Here is an example docstring:
+
 """
+Description
+
+Args:
+    param_1: description of the param up to 100 chars
+        then indent by 4 spaces on the new line
+
+        .. code-block:: python
+
+            # Some python example
+            print('hi')
+
+        .. Note:: some note
+            and another line with 4 spaces
+    param_2: description without a new line
+
+
+Returns:
+    some description of a the return
+
+.. code-block:: python
+
+    print('another example')
+
+"""
+'''
 
 _TEMPERATURE = 0.0
 

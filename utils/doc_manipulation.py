@@ -28,8 +28,7 @@ class DocstringMap:
 
 ######################## Read ####################
 def _get_node_type(node: ast.AST) -> Union[ast.Module, ast.FunctionDef, ast.ClassDef]:
-    """
-    Determine the type of the given AST node.
+    """Determine the type of the given AST node.
 
     Args:
         node (ast.AST): AST node.
@@ -46,9 +45,9 @@ def _get_node_type(node: ast.AST) -> Union[ast.Module, ast.FunctionDef, ast.Clas
 
 
 def _get_docstrings_map(source_code: str, to_change_key: str) -> Iterator[DocstringMap]:
-    """
-    Yield DocstringMap objects for docstrings found in the source code.
-    Note that rows ranges are 0-indexed and the end index is meant to be used as non-inclusive.
+    """Yield DocstringMap objects for docstrings found in the source code.
+
+    Rows ranges are 0-indexed and the end index is meant to be used as non-inclusive.
 
     Args:
         source_code (str): Python source code.
